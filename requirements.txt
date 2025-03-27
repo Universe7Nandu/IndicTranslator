@@ -7,7 +7,7 @@ Pillow==10.2.0
 requests==2.31.0
 langdetect==1.0.9
 numpy==1.26.4
-streamlit-extras
+streamlit-extras==0.2.0
 validators
 
 pandas==2.1.4
