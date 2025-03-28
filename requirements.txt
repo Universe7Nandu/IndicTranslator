@@ -18,3 +18,4 @@ python-docx==0.8.11
 PyPDF2==3.0.1
 pdfplumber==0.10.3
 SpeechRecognition==3.10.0
+validators>=0.20.0
