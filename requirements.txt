@@ -7,11 +7,7 @@ Pillow==10.2.0
 requests==2.31.0
 langdetect==1.0.9
 numpy==1.26.4
-streamlit-extras==0.2.0
-validators
-
-pandas==2.1.4
-pydub==0.25.1
+streamlit-extras==0.3.1
 streamlit-lottie==0.0.5
 streamlit-option-menu==0.3.6
 streamlit-toggle==0.1.1
@@ -22,4 +18,3 @@ python-docx==0.8.11
 PyPDF2==3.0.1
 pdfplumber==0.10.3
 SpeechRecognition==3.10.0
-streamlit_extras.metric_cards
