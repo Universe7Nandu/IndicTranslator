@@ -4,18 +4,14 @@ import tempfile
 import streamlit as st
 from deep_translator import GoogleTranslator
 from dotenv import load_dotenv
-import groq
 from gtts import gTTS
 from PIL import Image
-import requests
 from langdetect import detect, LangDetectException
 import time
 import json
 from typing import Dict, Any
 import numpy as np
-from streamlit_extras.switch_page_button import switch_page
 from streamlit_extras.colored_header import colored_header
-from streamlit_extras.app_logo import add_logo
 from streamlit_extras.metric_cards import metric_card
 from streamlit_extras.grid import grid
 from streamlit_extras.custom_notification_box import notification_box
@@ -33,7 +29,6 @@ from io import BytesIO
 
 # Load environment variables
 load_dotenv()
-GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 
 # Page configuration
 st.set_page_config(
@@ -43,81 +38,32 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Enhanced CSS with modern 3D effects and animations
+# After the page configuration, add this CSS
 st.markdown("""
 <style>
-    /* Modern theme colors with enhanced gradients */
+    /* Basic theme colors */
     :root {
         --bg-color: #0a0f1c;
         --card-bg: #1a1f2e;
         --accent: #4f46e5;
-        --accent-hover: #4338ca;
         --text: #f8fafc;
         --text-secondary: #94a3b8;
-        --border: #2d3748;
-        --gradient-1: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
-        --gradient-2: linear-gradient(135deg, #1a1f2e 0%, #2d3748 100%);
-        --gradient-3: linear-gradient(45deg, #3b82f6, #8b5cf6, #d946ef);
-        --gradient-4: linear-gradient(-45deg, #4f46e5, #7c3aed, #2563eb);
-        --gradient-5: linear-gradient(to right, #4f46e5, #7c3aed, #2563eb);
-        --gradient-6: linear-gradient(135deg, #1a1f2e 0%, #2d3748 100%);
-        --gradient-7: linear-gradient(45deg, #3b82f6, #8b5cf6, #d946ef);
-        --gradient-8: linear-gradient(-45deg, #4f46e5, #7c3aed, #2563eb);
     }
 
-    /* Enhanced header with 3D effects */
+    /* Header styling */
     .header-section {
-        background: var(--gradient-3);
+        background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
         border-radius: 20px;
         padding: 2rem;
         margin-bottom: 2rem;
         box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-        position: relative;
-        overflow: hidden;
-        transform-style: preserve-3d;
-        perspective: 1000px;
-    }
-
-    .header-section::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: var(--gradient-4);
-        opacity: 0.3;
-        animation: gradient 8s ease infinite;
-        transform: translateZ(-10px);
-    }
-
-    @keyframes gradient {
-        0% { background-position: 0% 50%; }
-        50% { background-position: 100% 50%; }
-        100% { background-position: 0% 50%; }
-    }
-
-    .header-content {
-        position: relative;
-        z-index: 1;
-        transform-style: preserve-3d;
     }
 
     .header-title {
-        font-size: 3.5rem;
+        font-size: 2.5rem;
         font-weight: 800;
-        background: linear-gradient(to right, #fff, #e2e8f0);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
+        color: white;
         margin-bottom: 1rem;
-        text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-        transform-style: preserve-3d;
-        transition: transform 0.3s ease;
-        animation: float 3s ease-in-out infinite;
-    }
-
-    .header-title:hover {
-        transform: translateZ(20px) rotateX(5deg);
     }
 
     .header-subtitle {
@@ -125,53 +71,28 @@ st.markdown("""
         color: rgba(255,255,255,0.9);
         max-width: 600px;
         line-height: 1.6;
-        transform: translateZ(10px);
     }
 
-    /* Enhanced translator panels with 3D effects */
+    /* Translator panel styling */
     .translator-panel {
-        background: rgba(26, 31, 46, 0.8);
-        backdrop-filter: blur(12px);
+        background: var(--card-bg);
         border-radius: 20px;
         padding: 28px;
         margin: 20px 0;
         border: 1px solid rgba(255,255,255,0.1);
         box-shadow: 0 8px 32px rgba(0,0,0,0.2);
-        transform-style: preserve-3d;
-        transition: all 0.4s ease;
-        position: relative;
-        overflow: hidden;
     }
 
-    .translator-panel::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: var(--gradient-5);
-        opacity: 0.1;
-        z-index: 0;
-    }
-
-    .translator-panel:hover {
-        transform: translateY(-8px) translateZ(20px);
-        box-shadow: 0 15px 45px rgba(0,0,0,0.3);
-    }
-
-    /* Enhanced language selector */
+    /* Language selector styling */
     .language-selector {
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
         gap: 12px;
         margin: 20px 0;
-        position: relative;
-        z-index: 1;
     }
 
     .language-btn {
-        background: var(--gradient-2);
+        background: var(--card-bg);
         color: var(--text);
         border: 1px solid rgba(255,255,255,0.1);
         border-radius: 12px;
@@ -180,234 +101,58 @@ st.markdown("""
         transition: all 0.3s ease;
         text-align: center;
         font-size: 0.9rem;
-        backdrop-filter: blur(8px);
-        transform-style: preserve-3d;
     }
 
     .language-btn:hover {
-        background: var(--gradient-1);
-        transform: translateY(-3px) translateZ(10px);
-        box-shadow: 0 6px 15px rgba(79, 70, 229, 0.3);
+        background: var(--accent);
+        transform: translateY(-3px);
     }
 
-    .language-btn.active {
-        background: var(--gradient-1);
-        border-color: var(--accent);
-        transform: translateZ(5px);
-    }
-
-    /* Enhanced buttons with 3D effects */
+    /* Button styling */
     .stButton > button {
-        background: var(--gradient-1) !important;
+        background: var(--accent) !important;
         color: white !important;
         border: none !important;
         border-radius: 12px !important;
         padding: 0.75rem 1.5rem !important;
         font-weight: 600 !important;
         transition: all 0.3s ease !important;
-        transform-style: preserve-3d !important;
-        box-shadow: 0 4px 12px rgba(79, 70, 229, 0.2) !important;
-        position: relative;
-        overflow: hidden;
-    }
-
-    .stButton > button::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: -100%;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(
-            90deg,
-            transparent,
-            rgba(255, 255, 255, 0.2),
-            transparent
-        );
-        transition: 0.5s;
-    }
-
-    .stButton > button:hover::before {
-        left: 100%;
     }
 
     .stButton > button:hover {
-        transform: translateY(-3px) translateZ(5px) !important;
+        transform: translateY(-3px) !important;
         box-shadow: 0 8px 20px rgba(79, 70, 229, 0.3) !important;
     }
 
-    /* Enhanced text areas with 3D effects */
+    /* Text area styling */
     .stTextArea > div > div > textarea {
-        background: rgba(26, 31, 46, 0.8) !important;
+        background: var(--card-bg) !important;
         color: var(--text) !important;
         border: 1px solid rgba(255,255,255,0.1) !important;
         border-radius: 15px !important;
         padding: 20px !important;
         font-size: 1.1rem !important;
         line-height: 1.6 !important;
-        backdrop-filter: blur(12px) !important;
-        transition: all 0.3s ease !important;
-        transform-style: preserve-3d !important;
     }
 
-    .stTextArea > div > div > textarea:focus {
-        border-color: var(--accent) !important;
-        box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2) !important;
-        transform: translateY(-2px) translateZ(5px);
-    }
-
-    /* Floating animation */
-    @keyframes float {
-        0% { transform: translateY(0px) translateZ(0); }
-        50% { transform: translateY(-10px) translateZ(10px); }
-        100% { transform: translateY(0px) translateZ(0); }
-    }
-
-    .floating {
-        animation: float 3s ease-in-out infinite;
-    }
-
-    /* Enhanced developer card with 3D effects */
+    /* Developer info styling */
     .dev-info {
-        background: var(--gradient-2);
+        background: var(--card-bg);
         border-radius: 20px;
         padding: 28px;
         margin: 24px 0;
         border: 1px solid rgba(255,255,255,0.1);
         box-shadow: 0 8px 32px rgba(0,0,0,0.2);
-        backdrop-filter: blur(12px);
-        transition: all 0.3s ease;
-        transform-style: preserve-3d;
     }
 
-    .dev-info:hover {
-        transform: translateY(-5px) translateZ(10px);
-        box-shadow: 0 12px 40px rgba(0,0,0,0.3);
-    }
-
-    /* Enhanced footer with 3D effects */
+    /* Footer styling */
     .footer {
         text-align: center;
         padding: 32px;
         margin-top: 48px;
-        background: var(--gradient-2);
+        background: var(--card-bg);
         border-radius: 20px;
         border: 1px solid rgba(255,255,255,0.1);
-        backdrop-filter: blur(12px);
-        transform-style: preserve-3d;
-    }
-
-    /* Custom scrollbar */
-    ::-webkit-scrollbar {
-        width: 8px;
-    }
-
-    ::-webkit-scrollbar-track {
-        background: var(--bg-color);
-    }
-
-    ::-webkit-scrollbar-thumb {
-        background: var(--accent);
-        border-radius: 4px;
-    }
-
-    ::-webkit-scrollbar-thumb:hover {
-        background: var(--accent-hover);
-    }
-
-    /* Loading animation */
-    .loading {
-        position: relative;
-        width: 100%;
-        height: 4px;
-        background: var(--gradient-1);
-        overflow: hidden;
-    }
-
-    .loading::after {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: var(--gradient-2);
-        animation: loading 1.5s infinite;
-    }
-
-    @keyframes loading {
-        0% { transform: translateX(-100%); }
-        100% { transform: translateX(100%); }
-    }
-
-    /* Enhanced file upload area */
-    .stFileUploader > div {
-        background: rgba(26, 31, 46, 0.8) !important;
-        border-radius: 15px !important;
-        padding: 20px !important;
-        border: 2px dashed rgba(255,255,255,0.1) !important;
-        transition: all 0.3s ease !important;
-    }
-
-    .stFileUploader > div:hover {
-        border-color: var(--accent) !important;
-        transform: translateY(-2px);
-    }
-
-    /* Enhanced selectbox */
-    .stSelectbox > div > div {
-        background: rgba(26, 31, 46, 0.8) !important;
-        border-radius: 12px !important;
-        border: 1px solid rgba(255,255,255,0.1) !important;
-    }
-
-    .stSelectbox > div > div:hover {
-        border-color: var(--accent) !important;
-    }
-
-    /* Enhanced radio buttons */
-    .stRadio > div {
-        background: rgba(26, 31, 46, 0.8) !important;
-        border-radius: 12px !important;
-        padding: 10px !important;
-    }
-
-    /* Enhanced checkbox */
-    .stCheckbox > div {
-        background: rgba(26, 31, 46, 0.8) !important;
-        border-radius: 8px !important;
-        padding: 5px !important;
-    }
-
-    /* Enhanced tabs */
-    .stTabs [data-baseweb="tab-list"] {
-        background: rgba(26, 31, 46, 0.8) !important;
-        border-radius: 12px !important;
-        padding: 5px !important;
-    }
-
-    .stTabs [data-baseweb="tab"] {
-        border-radius: 8px !important;
-        transition: all 0.3s ease !important;
-    }
-
-    .stTabs [data-baseweb="tab"]:hover {
-        background: var(--gradient-1) !important;
-    }
-
-    /* Enhanced metric cards */
-    .metric-card {
-        background: var(--gradient-2) !important;
-        border-radius: 15px !important;
-        padding: 20px !important;
-        margin: 10px 0 !important;
-        border: 1px solid rgba(255,255,255,0.1) !important;
-        transition: all 0.3s ease !important;
-    }
-
-    .metric-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 8px 20px rgba(0,0,0,0.2);
     }
 </style>
 """, unsafe_allow_html=True)
