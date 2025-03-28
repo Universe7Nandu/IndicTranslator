@@ -12,11 +12,9 @@ import json
 from typing import Dict, Any
 import numpy as np
 from streamlit_extras.colored_header import colored_header
-from streamlit_extras.metric_cards import metric_card
 from streamlit_extras.grid import grid
 from streamlit_extras.custom_notification_box import notification_box
 from streamlit_extras.let_it_rain import rain
-from streamlit_extras.buy_me_a_coffee import button as buy_me_a_coffee
 from streamlit_lottie import st_lottie
 from streamlit_option_menu import option_menu
 from streamlit_toggle import st_toggle_switch
@@ -38,25 +36,50 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# After the page configuration, add this CSS
+# Modern UI CSS
 st.markdown("""
 <style>
-    /* Basic theme colors */
+    /* Modern theme colors */
     :root {
         --bg-color: #0a0f1c;
         --card-bg: #1a1f2e;
         --accent: #4f46e5;
+        --accent-hover: #4338ca;
         --text: #f8fafc;
         --text-secondary: #94a3b8;
+        --border: #2d3748;
+        --gradient-1: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+        --gradient-2: linear-gradient(135deg, #1a1f2e 0%, #2d3748 100%);
+        --gradient-3: linear-gradient(45deg, #3b82f6, #8b5cf6, #d946ef);
     }
 
-    /* Header styling */
+    /* Modern header */
     .header-section {
-        background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+        background: var(--gradient-3);
         border-radius: 20px;
         padding: 2rem;
         margin-bottom: 2rem;
         box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .header-section::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: var(--gradient-1);
+        opacity: 0.3;
+        animation: gradient 8s ease infinite;
+    }
+
+    @keyframes gradient {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
     }
 
     .header-title {
@@ -64,6 +87,7 @@ st.markdown("""
         font-weight: 800;
         color: white;
         margin-bottom: 1rem;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
     }
 
     .header-subtitle {
@@ -73,7 +97,7 @@ st.markdown("""
         line-height: 1.6;
     }
 
-    /* Translator panel styling */
+    /* Modern translator panel */
     .translator-panel {
         background: var(--card-bg);
         border-radius: 20px;
@@ -81,9 +105,15 @@ st.markdown("""
         margin: 20px 0;
         border: 1px solid rgba(255,255,255,0.1);
         box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+        transition: all 0.3s ease;
     }
 
-    /* Language selector styling */
+    .translator-panel:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 45px rgba(0,0,0,0.3);
+    }
+
+    /* Modern language selector */
     .language-selector {
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
@@ -108,9 +138,9 @@ st.markdown("""
         transform: translateY(-3px);
     }
 
-    /* Button styling */
+    /* Modern buttons */
     .stButton > button {
-        background: var(--accent) !important;
+        background: var(--gradient-1) !important;
         color: white !important;
         border: none !important;
         border-radius: 12px !important;
@@ -124,7 +154,7 @@ st.markdown("""
         box-shadow: 0 8px 20px rgba(79, 70, 229, 0.3) !important;
     }
 
-    /* Text area styling */
+    /* Modern text areas */
     .stTextArea > div > div > textarea {
         background: var(--card-bg) !important;
         color: var(--text) !important;
@@ -135,7 +165,7 @@ st.markdown("""
         line-height: 1.6 !important;
     }
 
-    /* Developer info styling */
+    /* Modern developer info */
     .dev-info {
         background: var(--card-bg);
         border-radius: 20px;
@@ -143,9 +173,15 @@ st.markdown("""
         margin: 24px 0;
         border: 1px solid rgba(255,255,255,0.1);
         box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+        transition: all 0.3s ease;
     }
 
-    /* Footer styling */
+    .dev-info:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 12px 40px rgba(0,0,0,0.3);
+    }
+
+    /* Modern footer */
     .footer {
         text-align: center;
         padding: 32px;
@@ -153,6 +189,24 @@ st.markdown("""
         background: var(--card-bg);
         border-radius: 20px;
         border: 1px solid rgba(255,255,255,0.1);
+    }
+
+    /* Custom scrollbar */
+    ::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+        background: var(--bg-color);
+    }
+
+    ::-webkit-scrollbar-thumb {
+        background: var(--accent);
+        border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+        background: var(--accent-hover);
     }
 </style>
 """, unsafe_allow_html=True)
