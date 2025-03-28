@@ -21,11 +21,18 @@ from streamlit_extras.grid import grid
 from streamlit_extras.custom_notification_box import notification_box
 from streamlit_extras.let_it_rain import rain
 from streamlit_extras.buy_me_a_coffee import button as buy_me_a_coffee
+from streamlit_lottie import st_lottie
+from streamlit_option_menu import option_menu
+from streamlit_toggle import st_toggle_switch
+import altair as alt
+import docx
+from PyPDF2 import PdfReader
+import pdfplumber
+import speech_recognition as sr
+from io import BytesIO
 
-# Load environment variables from .env file
+# Load environment variables
 load_dotenv()
-
-# Get API key
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 
 # Page configuration
@@ -332,6 +339,76 @@ st.markdown("""
         0% { transform: translateX(-100%); }
         100% { transform: translateX(100%); }
     }
+
+    /* Enhanced file upload area */
+    .stFileUploader > div {
+        background: rgba(26, 31, 46, 0.8) !important;
+        border-radius: 15px !important;
+        padding: 20px !important;
+        border: 2px dashed rgba(255,255,255,0.1) !important;
+        transition: all 0.3s ease !important;
+    }
+
+    .stFileUploader > div:hover {
+        border-color: var(--accent) !important;
+        transform: translateY(-2px);
+    }
+
+    /* Enhanced selectbox */
+    .stSelectbox > div > div {
+        background: rgba(26, 31, 46, 0.8) !important;
+        border-radius: 12px !important;
+        border: 1px solid rgba(255,255,255,0.1) !important;
+    }
+
+    .stSelectbox > div > div:hover {
+        border-color: var(--accent) !important;
+    }
+
+    /* Enhanced radio buttons */
+    .stRadio > div {
+        background: rgba(26, 31, 46, 0.8) !important;
+        border-radius: 12px !important;
+        padding: 10px !important;
+    }
+
+    /* Enhanced checkbox */
+    .stCheckbox > div {
+        background: rgba(26, 31, 46, 0.8) !important;
+        border-radius: 8px !important;
+        padding: 5px !important;
+    }
+
+    /* Enhanced tabs */
+    .stTabs [data-baseweb="tab-list"] {
+        background: rgba(26, 31, 46, 0.8) !important;
+        border-radius: 12px !important;
+        padding: 5px !important;
+    }
+
+    .stTabs [data-baseweb="tab"] {
+        border-radius: 8px !important;
+        transition: all 0.3s ease !important;
+    }
+
+    .stTabs [data-baseweb="tab"]:hover {
+        background: var(--gradient-1) !important;
+    }
+
+    /* Enhanced metric cards */
+    .metric-card {
+        background: var(--gradient-2) !important;
+        border-radius: 15px !important;
+        padding: 20px !important;
+        margin: 10px 0 !important;
+        border: 1px solid rgba(255,255,255,0.1) !important;
+        transition: all 0.3s ease !important;
+    }
+
+    .metric-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -456,6 +533,52 @@ def get_audio_player(audio_path):
             </audio>
         """
     except Exception:
+        return None
+
+def process_document_text(file, file_type):
+    """Process different document types and extract text"""
+    try:
+        if file_type == "txt":
+            return file.getvalue().decode("utf-8")
+        elif file_type == "pdf":
+            pdf_reader = PdfReader(file)
+            text = ""
+            for page in pdf_reader.pages:
+                text += page.extract_text() + "\n"
+            return text
+        elif file_type == "docx":
+            doc = docx.Document(file)
+            text = ""
+            for paragraph in doc.paragraphs:
+                text += paragraph.text + "\n"
+            return text
+    except Exception as e:
+        st.error(f"Error processing document: {str(e)}")
+        return None
+
+def translate_document(text, target_lang, source_lang='auto'):
+    """Translate document text with progress tracking"""
+    try:
+        if not text:
+            return None
+        
+        # Split text into chunks for better handling
+        chunks = [text[i:i+500] for i in range(0, len(text), 500)]
+        translated_chunks = []
+        
+        progress_bar = st.progress(0)
+        status_text = st.empty()
+        
+        for i, chunk in enumerate(chunks):
+            status_text.text(f"Translating chunk {i+1}/{len(chunks)}...")
+            translated = translate_text(chunk, target_lang, source_lang)
+            translated_chunks.append(translated)
+            progress_bar.progress((i + 1) / len(chunks))
+        
+        status_text.text("Translation completed!")
+        return " ".join(translated_chunks)
+    except Exception as e:
+        st.error(f"Document translation error: {str(e)}")
         return None
 
 def main():
